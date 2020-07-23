@@ -1,6 +1,8 @@
 import requests
 from datetime import datetime
 import csv
+import json
+import datetime
 
 def time_price(val):
     ts = int(str(val[0])[:-3])
@@ -61,24 +63,45 @@ def save_csv(file_name, data_list):
         writer = csv.writer(file, delimiter='\t')
         writer.writerows(data_list)
 
+def get_btc_json(start_date, end_date):
+    file_name = 'json/' + start_date + '_' + end_date + '.json'
+    print(file_name)
+    # start_date = '2020-06-27'
+    # end_date = '2020-06-28'
+    url = 'https://production.api.coindesk.com/v2/price/values/BTC?start_date={}T20:00&end_date={}T19:59&ohlc=false'.format(start_date, end_date)
+ 
+    resp = requests.get(url=url)
+    d = resp.json()
+    msg = d['message']
+    if msg == 'OK':
+        data = d['data']['entries']     
+        with open(file_name, 'w') as f:
+            json.dump(data, f)
+    else:
+        print('Err: Couldn\'t get json data')
+
+def priv_date(y, m, d):
+    # 2020, 1, 2
+    ymd = str((datetime.date(y, m, d) - datetime.timedelta(1))).split('-')
+    y = ymd[0]
+    m = ymd[1]
+    d = ymd[2]
+    return y,m,d
+
+def str_end_date_gen(iter, start_date):
+    r = []
+    sd = start_date
+    for i in range(iter):
+        ymd = start_date.split('-')
+        y = ymd[0]
+        m = ymd[1]
+        d = ymd[2]
+
+        pd = priv_date(y, m, d)
+
+
 start_date = '2020-06-27'
 end_date = '2020-06-28'
-url = 'https://production.api.coindesk.com/v2/price/values/BTC?start_date={}T20:00&end_date={}T19:59&ohlc=false'.format(start_date, end_date)
 
-resp = requests.get(url=url)
-d = resp.json()
-
-msg = d['message']
-if msg == 'OK':
-    data = d['data']['entries']
-    ll = format_data(data)
-    file_name = start_date + '--' + end_date + '.csv'
-    save_csv(file_name, ll)
-else:
-    print('Err: Couldn\'t get json data')
-
-
-data_list = [["SN", "Name", "Contribution"],
-             [6, "Linus Torvalds", "Linux Kernel"],
-             [2, "Tim Berners-Lee", "World Wide Web"],
-             [3, "Guido van Rossum", "Python Programming"]]
+y,m,d=priv_date(1993, 12, 30)
+print(d)
