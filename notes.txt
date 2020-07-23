@@ -1,0 +1,1 @@
+https://production.api.coindesk.com/v2/price/values/BTC?start_date=2020-06-27T20:00&end_date=2020-06-28T19:59&ohlc=false
