@@ -34,8 +34,12 @@ def priv_price(val):
 	return float(sp[1])
 
 def write_csv(val, file_name):
-	with open(file_name, 'w') as the_file:
-		the_file.write(val)
+	try:
+		with open(file_name, 'w') as the_file:
+			the_file.write(val)
+			print(file_name + 'exported')
+	except:
+		print("Couldn't export data :'(")
 
 def chunk_data(pd_lst, price_lst, act_lst, volume_lst, tim_lst, chunk, export_file_name):
 	r=''
