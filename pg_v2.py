@@ -92,5 +92,8 @@ def prepare_dataset(raw_data_file_name, size, update, chunk, export_file_name):
 			print("Remaining:\t",-1*size-i)
 	chunk_data(pd_lst=pd_lst, price_lst=price_lst, act_lst=act_lst, volume_lst=volume_lst, tim_lst=tim_lst, chunk=chunk, export_file_name=export_file_name)
 
-exp_fn = 'ttformatted_data_v2.csv'
-prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=10, update=10, chunk=10)
+exp_fn = '5chunk_formatted_data_v2.csv'
+size = 500000
+update = 1000
+chunk = 5
+prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=1000, chunk=chunk)
