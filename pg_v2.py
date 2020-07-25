@@ -1,4 +1,6 @@
 from datetime import datetime
+import inflect
+p = inflect.engine()
 
 def time_price(val):
 	ts = int(str(val[0])[:-3])
@@ -31,16 +33,40 @@ def priv_price(val):
 	sp = val.split(',')
 	return float(sp[1])
 
-def write_csv(val):
-	with open('formatted_data_v2.csv', 'a') as the_file:
+def write_csv(val, file_name):
+	with open(file_name, 'w') as the_file:
 		the_file.write(val)
 
+def chunk_data(pd_lst, price_lst, act_lst, volume_lst, tim_lst, chunk, export_file_name):
+	r=''
+	chunk_title_lst = [p.ordinal(i+1) for i in range(chunk)]
+	chunk_title_str = ','.join(chunk_title_lst)
 
+	title = 'Time,' + 'Price,' + 'Volume,' + chunk_title_str + ',Action\n'
+	r += title
+	for i,val in enumerate(pd_lst):
+		if((i+chunk) <= len(pd_lst)):
+			pdl = pd_lst[i:i+chunk]
+			pd_lst_str = ','.join(str(v) for v in pdl)
+			r += '{},{},{},{},{}\n'.format(tim_lst[i+chunk-1], price_lst[i+chunk-1], volume_lst[i+chunk-1], pd_lst_str, act_lst[i+chunk-1])
+	write_csv(r, file_name=export_file_name)
+	
+	
+def prepare_dataset(raw_data_file_name, size, update, chunk, export_file_name):
+	size = -1*size - chunk + 1
+	with open(raw_data_file_name,'r') as f:
+		rd = f.read()
 
-def format_data(data_sp):
-	r = ''
+	spltd = rd.split('\n')
+	del spltd[-1]
+	data_sp = spltd[size:]
+
+	pd_lst = []
+	price_lst = []
+	volume_lst = []
+	tim_lst = []
+	act_lst = []
 	for i, val in enumerate(data_sp):
-		
 		sp = val.split(',')
 		timestamp = sp[0]
 		tim = timestamp_to_time(timestamp)
@@ -57,40 +83,14 @@ def format_data(data_sp):
 		f_pd = percentage_diff(fp, cp)
 		act = action(c_pd, f_pd)
 
-		r = '{},{},{},{},{},{}\n'.format(timestamp, tim, open_price, volume, c_pd, act)
-		write_csv(r)
-		if(i%1000 == 0):
-			print("Remaining:\t",100000-i)
-	
-def chunk_data():
-    chank_len = 10
-    acts=[]
-    pds=[]
-    r = ''
-    with open('rd_v2.csv','r') as f:
-	    rd = f.read()
+		pd_lst.append(c_pd)
+		price_lst.append(open_price)
+		volume_lst.append(volume)
+		tim_lst.append(tim)
+		act_lst.append(act)
+		if(i%update == 0):
+			print("Remaining:\t",-1*size-i)
+	chunk_data(pd_lst=pd_lst, price_lst=price_lst, act_lst=act_lst, volume_lst=volume_lst, tim_lst=tim_lst, chunk=chunk, export_file_name=export_file_name)
 
-    sp = rd.split('\n')
-    for i,val in enumerate(sp):
-        spsp=val.split(',')
-        acts.append(spsp[1])
-        pds.append(spsp[0])
-    for i,val in enumerate(pds):
-        if(i<(len(pds)+chank_len)):
-            r=pds[i:(i+chank_len)]
-    print(r)
-
-
-data = """1595461020,9502.93,9510.04,9502.57,9509.85,23.867749
-1595461080,9509.92,9514.48,9509.29,9512.66,39.05067
-1595461140,9512.66,9513.21,9512.63,9513.2,23.894138
-1595461200,9513.2,9513.91,9511.73,9512.28,34.32692"""
-
-
-
-
-chunk_data()
-# frmt = sp[-100000:]
-
-# format_data(frmt)
-# write_csv(data)
+exp_fn = 'ttformatted_data_v2.csv'
+prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=10, update=10, chunk=10)
