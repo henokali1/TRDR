@@ -60,7 +60,7 @@ def format_data(data_sp):
 		r = '{},{},{},{},{},{}\n'.format(timestamp, tim, open_price, volume, c_pd, act)
 		write_csv(r)
 		if(i%1000 == 0):
-			print("Remaining:\t",100000-i)
+			print("Remaining:\t",500000-i)
 	
 
 data = """1595461020,9502.93,9510.04,9502.57,9509.85,23.867749
@@ -73,7 +73,7 @@ with open('raw_data.csv','r') as f:
 	print(len(rd))
 
 sp = rd.split('\n')
-frmt = sp[-100000:]
+frmt = sp[-500000:]
 
 format_data(frmt)
 # write_csv(data)
