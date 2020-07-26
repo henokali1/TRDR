@@ -80,7 +80,9 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 	act_lst = []
 
 	priv_trade_price_idx = 0
+	priv_trade_price = 0.0
 	priv_trade_volume_idx = 0
+	priv_trade_volume = 0.0
 	priv_action = ''
 	for i, val in enumerate(data_sp):
 		sp = val.split(',')
@@ -99,11 +101,11 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		act = action(c_pd, f_pd)
 
 		if priv_action != act:
-			price_pd_bn_trades = percentage_diff(cp, priv_price(data_sp[priv_trade_price_idx]))
+			price_pd_bn_trades = percentage_diff(cp, priv_price(priv_trade_price)
 			volume_pd_bn_trades = percentage_diff(volume, priv_price(data_sp[priv_trade_volume_idx]))
 
-			priv_trade_price = priv_price(data_sp[priv_trade_price_idx])
-			priv_trade_volume = priv_price(data_sp[priv_trade_volume_idx])
+			priv_trade_price = cp
+			priv_trade_volume = volume
 
 			priv_trade_price_idx = i
 			priv_trade_volume_idx = i
