@@ -137,8 +137,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 # update = int(input('Update: '))
 
 # exp_fn = input('Exprot Dataset Filename: ')+'.csv'
-size = 100000
-update = 10000
-exp_fn = 'v4-Price-Volume-Price_PD-Volume_PD-Price_PD_bn_Trades-Volume_PD_bn_Trades-Mins_bn_Trade-Action.csv'
+size = 1491668
+update = 100000
+exp_fn = 'v4-all-dataset-training.csv'
 
 prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update)
