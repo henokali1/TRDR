@@ -64,7 +64,7 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 
 	spltd = rd.split('\n')
 	del spltd[-1]
-	# del spltd[0]
+	del spltd[0]
 	data_sp = spltd[size:]
 
 	price_pd_lst = []
@@ -96,13 +96,15 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 
 		f_pd = percentage_diff(fp, cp)
 		act = action(c_pd, f_pd)
-		mins_bn_trade = int((cur_ts-priv_trade_ts)/60)
+		
 		if priv_act != act:
 			price_pd_bn_trades = round(percentage_diff(cp, priv_trade_price), 4)
 			volume_pd_bn_trades = round(percentage_diff(cv, priv_trade_vol), 4)
+			mins_bn_trade = int((cur_ts-priv_trade_ts)/60)
 			priv_trade_price = cp
 			priv_trade_vol = volume
 			priv_trade_ts = cur_ts
+			priv_act = act
 		else:
 			price_pd_bn_trades = 0.0
 			volume_pd_bn_trades = 0.0
@@ -116,8 +118,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		volume_pd_bn_trades_lst.append(volume_pd_bn_trades)
 		mins_bn_trade_lst.append(mins_bn_trade)
 		act_lst.append(act)
-		# if(i%update == 0):
-		# 	print("Remaining:\t",-1*size-i)
+		if(i%update == 0):
+			print("Remaining:\t",-1*size-i)
 	     
 	chunk_data(
 		price_lst=price_lst,
@@ -135,8 +137,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 # update = int(input('Update: '))
 
 # exp_fn = input('Exprot Dataset Filename: ')+'.csv'
-size = 10
-update = 1
-exp_fn = 'test.csv'
+size = 100000
+update = 10000
+exp_fn = 'v4-Price-Volume-Price_PD-Volume_PD-Price_PD_bn_Trades-Volume_PD_bn_Trades-Mins_bn_Trade-Action.csv'
 
 prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update)
