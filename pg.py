@@ -12,7 +12,7 @@ def read_file(fn):
 	return sp
 
 def pred(payload, actual_action, idx):
-	r = requests.post("http://localhost:8080/predict", json=payload).text
+	r = requests.post("http://34.83.91.155:8080/predict", json=payload).text
 	p = ast.literal_eval(r)
 	row_pred = p['predictions'][0]
 	scores = row_pred['scores']
