@@ -1,7 +1,13 @@
 import requests
 import ast
+import json
+import time
+from datetime import datetime
+from statistics import mean
 
 
+prev_price = 0.0
+prev_vol = 0.0
 
 def read_file(fn):
 	with open(fn,'r') as f:
@@ -60,26 +66,64 @@ def inp_pred():
 
 			pred(payload, actual_action, 3)
 
-lst = read_file('t.csv')
-wrong = []
-for idx,i in enumerate(lst):
-	if (idx%100) == 0:
-		print('Remaining: {}'.format(len(lst)-idx))
-		w = len(wrong)
-		t = len(lst)
-		accuracy = round(100 - (w*100.0)/t, 2)
-		print("Accuracy: {}%".format(accuracy))
-	sp = i.split(',')
-	actual_action = sp[-1]
-	payload = pay_load_format(i)
-	prediction = pred(payload)
+def current_min_trades():
+	base = 'https://api.binance.com'
+	q = '/api/v3/trades'
+	p = '?symbol=BTCUSDT&limit=1000'
+	url = base + q + p
 
-	if (prediction != actual_action):
-		wrong.append(idx)
-	# print(prediction == actual_action, actual_action, prediction)
+	x = requests.get(url)
+	d = x.text
+	dd = json.loads(d)
+	return dd[::-1]
 
 
+def avg_price_vol():
+	current_trades = current_min_trades()
+	starting_time = current_trades[0]['time']
+	print(datetime.utcfromtimestamp(starting_time/1000).strftime('%Y-%m-%d %H:%M:%S'))
+	price_lst = []
+	vol_lst = []
+	avg_price = 0.0
+	vol = 0.0
+	for i,val in enumerate(current_trades):
+		t = val['time']
+		dif = abs(starting_time-t)
+		# print(f'diff: {dif}')
+		# print(datetime.utcfromtimestamp(t/1000).strftime('%Y-%m-%d %H:%M:%S'))
+		if dif <= 60000:
+			price = float(val['price'])
+			price_lst.append(price)
+			qty = float(val['qty'])
+			vol_lst.append(qty)
+		if dif > 60000:
+			avg_price = mean(price_lst)
+			vol = round(sum(vol_lst),2)
+			break
+		
+	return {'price':avg_price, 'vol': vol}
 
-print(wrong)
 
-print("Accuracy: {}%".format(accuracy))
+def prep_data(p, v):
+	for i in range(500):
+		ct = avg_price_vol()
+		print(ct)
+		current_price = ct['price']
+		current_vol = ct['vol']
+		global prev_price
+		global prev_vol
+		# print(f'cp: {current_price}, pp: {prev_price}, cv: {current_vol}, pv: {prev_vol}')
+		
+		prv_data = f'time,{prev_price},high,low,close,{prev_vol}\n' 
+		current_data = f'time,{current_price},high,low,close,{current_vol}'
+		print(prv_data+current_data)
+
+		prev_price = current_price
+		prev_vol = current_vol
+		
+		time.sleep(60)
+
+# time,open,high,low,close,volume
+# 1502942400,4261.48,4261.48,4261.48,4261.48,1.775183
+# 1502942460,4261.48,4261.48,4261.48,4261.48,0
+prep_data(1,1)
