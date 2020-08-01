@@ -48,14 +48,14 @@ def write_csv(val, file_name):
 		print("Couldn't export data :'(")
 
 
-def chunk_data(export_file_name,current_price_lst,current_vol_lst,prev_price_lst,prev_vol_lst,price_pd_lst,vol_pd_lst,act_lst,prev_prev_act_lst,prev_act_lst):
+def chunk_data(export_file_name,current_price_lst,current_vol_lst,prev_price_lst,prev_vol_lst,price_pd_lst,vol_pd_lst,prev_prev_act_lst,prev_act_lst,act_lst):
 	r=''
 
-	title = 'currentPrice,currentVolume,previousPrice,previousVolume,pricePD,volPD,Action,PrevPrevAct,PrevAct\n'
+	title = 'currentPrice,currentVolume,previousPrice,previousVolume,pricePD,volPD,PrevPrevAct,PrevAct,Action\n'
 	r += title
 	for i,val in enumerate(current_price_lst):
 		if(i <= len(current_price_lst)):
-			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{act_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i]}\n'
+			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i],{act_lst[i]}}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
