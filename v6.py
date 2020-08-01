@@ -48,14 +48,14 @@ def write_csv(val, file_name):
 		print("Couldn't export data :'(")
 
 
-def chunk_data(export_file_name,current_price_lst,current_vol_lst,prev_price_lst,prev_vol_lst,price_pd_lst,vol_pd_lst,prev_prev_act_lst,prev_act_lst,act_lst):
+def chunk_data(export_file_name,current_price_lst,current_vol_lst,prev_price_lst,prev_vol_lst,price_pd_lst,vol_pd_lst,prev_prev_act_lst,prev_act_lst,prev_price_pd_lst,prev_prev_price_pd_lst,act_lst):
 	r=''
 
-	title = 'currentPrice,currentVolume,previousPrice,previousVolume,pricePD,volPD,PrevPrevAct,PrevAct,Action\n'
+	title = 'currentPrice,currentVolume,previousPrice,previousVolume,pricePD,volPD,PrevPrevAct,PrevAct,PrevPricePD,PrevPrevPricePD,Action\n'
 	r += title
 	for i,val in enumerate(current_price_lst):
 		if(i <= len(current_price_lst)):
-			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i]},{act_lst[i]}\n'
+			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i]},{prev_price_pd_lst[i]},{prev_prev_price_pd_lst[i]},{act_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
@@ -71,6 +71,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 
 	prev_price = 0.0
 	prev_vol = 0.0
+	prev_price_pd = 0.0
+	prev_prev_price_pd = 0.0
 	prev_prev_act = 'H'
 	prev_act = 'H'
 
@@ -83,6 +85,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 	act_lst = []
 	prev_prev_act_lst = []
 	prev_act_lst = []
+	prev_price_pd_lst = []
+	prev_prev_price_pd_lst = []
 
 
 	for i, val in enumerate(data_sp):
@@ -96,6 +100,7 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		current_price_pd = round(percentage_diff(open_price, prev_price), 6)
 		fp = open_price if i == len(data_sp) -1 else priv_price(data_sp[i+1])
 		f_pd = percentage_diff(fp, open_price)
+
 		act = action(current_price_pd, f_pd)
 
 
@@ -108,10 +113,14 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		act_lst.append(act)
 		prev_prev_act_lst.append(prev_prev_act)
 		prev_act_lst.append(prev_act)
+		prev_price_pd_lst.append(prev_price_pd)
+		prev_prev_price_pd_lst.append(prev_prev_price_pd)
 
 
 		prev_prev_act = prev_act
+		prev_prev_price_pd = prev_price_pd
 		prev_act = act
+		prev_price_pd = current_price_pd
 
 		if(i%update == 0):
 			print("Remaining:\t",-1*size-i)
@@ -127,13 +136,15 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		act_lst=act_lst,
 		prev_prev_act_lst=prev_prev_act_lst,
 		prev_act_lst=prev_act_lst,
+		prev_price_pd_lst=prev_price_pd_lst,
+		prev_prev_price_pd_lst=prev_prev_price_pd_lst,
 	)
 
 # size = 1534866
 # update = int(input('Update: '))
 
 # exp_fn = input('Exprot Dataset Filename: ')+'.csv'
-size = 50
+size = 100000
 update = 10000
 exp_fn = 'v6-training-dataset-100k.csv'
 
