@@ -55,7 +55,7 @@ def chunk_data(export_file_name,current_price_lst,current_vol_lst,prev_price_lst
 	r += title
 	for i,val in enumerate(current_price_lst):
 		if(i <= len(current_price_lst)):
-			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i],{act_lst[i]}}\n'
+			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i]},{act_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
@@ -134,7 +134,7 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 
 # exp_fn = input('Exprot Dataset Filename: ')+'.csv'
 size = 50
-update = 10
-exp_fn = 'v6.csv'
+update = 10000
+exp_fn = 'v6-training-dataset-100k.csv'
 
 prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update)
