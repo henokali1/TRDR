@@ -19,14 +19,10 @@ def percentage_diff(cp, pp):
 		return 0.0
 
 def action(c_pd, f_pd):
-	if((c_pd < 0) and (f_pd < 0)):
-		return 'H'
 	if((c_pd < 0) and (f_pd > 0)):
 		return 'B'
 	if((c_pd > 0) and (f_pd < 0)):
 		return 'S'
-	if((c_pd > 0) and (f_pd > 0)):
-		return 'H'
 	else:
 		return 'H'
 
@@ -48,14 +44,20 @@ def write_csv(val, file_name):
 		print("Couldn't export data :'(")
 
 
-def chunk_data(export_file_name,current_price_lst,current_vol_lst,prev_price_lst,prev_vol_lst,price_pd_lst,vol_pd_lst,prev_prev_act_lst,prev_act_lst,prev_price_pd_lst,prev_prev_price_pd_lst,price_pd_bn_trades_lst,vol_pd_bn_trades_lst,mins_bn_trade_lst,h_price_pd_lst,h_price_pd_bn_trades_lst,h_volume_pd_bn_trades_lst,h_mins_bn_trade_lst,act_lst):
+def chunk_data(
+		export_file_name,current_price_lst,current_vol_lst,
+		prev_price_lst,prev_vol_lst,price_pd_lst,vol_pd_lst,
+		prev_price_pd_lst,prev_prev_price_pd_lst,price_pd_bn_trades_lst,
+		vol_pd_bn_trades_lst,mins_bn_trade_lst,h_price_pd_lst,b_price_pd_lst,s_price_pd_lst,h_price_pd_bn_trades_lst,
+		h_volume_pd_bn_trades_lst,h_mins_bn_trade_lst,prev_acts_lst,act_lst,
+		prev_prev_acts_lst,
+	):
 	r=''
-
-	title = 'currentPrice,currentVolume,previousPrice,previousVolume,pricePD,volPD,PrevPrevAct,PrevAct,PrevPricePD,PrevPrevPricePD,PricePdBnTrades,VolPdBnTrades,MinsBnTrades,hPricePd,hPriceBnTrades,hVolPdBnTrades,hMinsBnTrades,Action\n'
+	title = 'currentPrice,currentVolume,previousPrice,previousVolume,pricePD,volPD,PrevPricePD,PrevPrevPricePD,PricePdBnTrades,VolPdBnTrades,MinsBnTrades,hPricePd,bPricePd,sPricePd,hPriceBnTrades,hVolPdBnTrades,hMinsBnTrades,prevActsLst,prevPrevActsLst,Action\n'
 	r += title
 	for i,val in enumerate(current_price_lst):
 		if(i <= len(current_price_lst)):
-			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_prev_act_lst[i]},{prev_act_lst[i]},{prev_price_pd_lst[i]},{prev_prev_price_pd_lst[i]},{price_pd_bn_trades_lst[i]},{vol_pd_bn_trades_lst[i]},{mins_bn_trade_lst[i]},{h_price_pd_lst[i]},{h_price_pd_bn_trades_lst[i]},{h_volume_pd_bn_trades_lst[i]},{h_mins_bn_trade_lst[i]},{act_lst[i]}\n'
+			r += f'{current_price_lst[i]},{current_vol_lst[i]},{prev_price_lst[i]},{prev_vol_lst[i]},{price_pd_lst[i]},{vol_pd_lst[i]},{prev_price_pd_lst[i]},{prev_prev_price_pd_lst[i]},{price_pd_bn_trades_lst[i]},{vol_pd_bn_trades_lst[i]},{mins_bn_trade_lst[i]},{h_price_pd_lst[i]},{b_price_pd_lst[i]},{s_price_pd_lst[i]},{h_price_pd_bn_trades_lst[i]},{h_volume_pd_bn_trades_lst[i]},{h_mins_bn_trade_lst[i]},{"-".join(list(prev_acts_lst[i]))},{"-".join(list(prev_prev_acts_lst[i]))},{act_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
@@ -81,6 +83,12 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 	h_priv_trade_price = 0.0
 	h_priv_trade_vol = 0.0
 	h_priv_trade_ts = 0
+	prev_b_price = 0.0
+	prev_s_price = 0.0
+
+	prev_acts_val = []
+	prev_prev_acts_lst = []
+
 
 	current_price_lst = []
 	current_vol_lst = []
@@ -97,9 +105,12 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 	vol_pd_bn_trades_lst = []
 	mins_bn_trade_lst = []
 	h_price_pd_lst = []
+	b_price_pd_lst = []
+	s_price_pd_lst = []
 	h_price_pd_bn_trades_lst = []
 	h_volume_pd_bn_trades_lst = []
 	h_mins_bn_trade_lst=[]
+	prev_acts_lst = []
 
 
 	for i, val in enumerate(data_sp):
@@ -122,10 +133,13 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 			priv_trade_price = open_price
 			priv_trade_vol = volume
 			priv_trade_ts = cur_ts
+			prev_prev_acts_lst.append(tuple(prev_acts_val))
+			prev_acts_val.clear()
 		else:
 			price_pd_bn_trades = 0.0
 			volume_pd_bn_trades = 0.0
 			mins_bn_trade = 0
+			prev_prev_acts_lst.append(tuple(prev_acts_val))
 		
 		if prev_act == 'H':
 			h_price_pd = round(percentage_diff(open_price, priv_trade_price), 4)
@@ -138,6 +152,23 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		else:
 			h_price_pd = 0.0
 			h_price_pd_bn_trades = 0.0
+		
+		if prev_act == 'B':
+			b_price_pd = round(percentage_diff(open_price, prev_b_price), 4)
+			prev_b_price = open_price
+		else:
+			b_price_pd = 0.0
+		
+		if prev_act == 'S':
+			s_price_pd = round(percentage_diff(open_price, prev_s_price), 4)
+			prev_s_price = open_price
+		else:
+			s_price_pd = 0.0
+
+
+		prev_acts_val.append(prev_act)
+		prev_acts_lst.append(tuple(prev_acts_val))
+		
 
 
 		act = action(current_price_pd, f_pd)
@@ -158,6 +189,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		vol_pd_bn_trades_lst.append(volume_pd_bn_trades)
 		mins_bn_trade_lst.append(mins_bn_trade)
 		h_price_pd_lst.append(h_price_pd)
+		b_price_pd_lst.append(b_price_pd)
+		s_price_pd_lst.append(s_price_pd)
 		h_price_pd_bn_trades_lst.append(h_price_pd_bn_trades)
 		h_volume_pd_bn_trades_lst.append(h_volume_pd_bn_trades)
 		h_mins_bn_trade_lst.append(h_mins_bn_trade)
@@ -170,7 +203,7 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 
 		if(i%update == 0):
 			print("Remaining:\t",-1*size-i)
-		 
+	
 	chunk_data(
 		export_file_name=export_file_name,
 		current_price_lst=current_price_lst,
@@ -180,17 +213,19 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		price_pd_lst=price_pd_lst,
 		vol_pd_lst=vol_pd_lst,
 		act_lst=act_lst,
-		prev_prev_act_lst=prev_prev_act_lst,
-		prev_act_lst=prev_act_lst,
 		prev_price_pd_lst=prev_price_pd_lst,
 		prev_prev_price_pd_lst=prev_prev_price_pd_lst,
 		price_pd_bn_trades_lst=price_pd_bn_trades_lst,
 		vol_pd_bn_trades_lst=vol_pd_bn_trades_lst,
 		mins_bn_trade_lst=mins_bn_trade_lst,
 		h_price_pd_lst=h_price_pd_lst,
+		b_price_pd_lst=b_price_pd_lst,
+		s_price_pd_lst=s_price_pd_lst,
 		h_price_pd_bn_trades_lst=h_price_pd_bn_trades_lst,
 		h_volume_pd_bn_trades_lst=h_volume_pd_bn_trades_lst,
 		h_mins_bn_trade_lst=h_mins_bn_trade_lst,
+		prev_acts_lst=prev_acts_lst,
+		prev_prev_acts_lst=prev_prev_acts_lst,
 	)
 
 # size = 1534866
@@ -199,6 +234,6 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 # exp_fn = input('Exprot Dataset Filename: ')+'.csv'
 size = 100000
 update = 10000
-exp_fn = 'v6-01-training-dataset-100k.csv'
+exp_fn = 'v6-04-100k-training-dataset.csv'
 
 prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update)
