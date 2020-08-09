@@ -44,7 +44,7 @@ def write_csv(val, file_name):
 def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, export_file_name):
 	r=''
 
-	title = 'Time,' + 'Price,' + 'Pd,' + 'Action\n'
+	title = 'Time,Price,Pd,Action,LateAction\n'
 	r += title
 	for i,val in enumerate(pd_lst):
 		if(i <= len(pd_lst)):
