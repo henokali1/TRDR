@@ -66,6 +66,7 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 	price_lst = []
 	act_lst = []
 	time_lst = []
+	prev_act = ''
 	for i, val in enumerate(data_sp):
 		sp = val.split(',')
 		open_price = float(sp[1])
@@ -83,6 +84,11 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 		time_lst.append(tm)
 		pd_lst.append(c_pd)
 		price_lst.append(open_price)
+		if (act=="B") or (act=="S"):
+			if act != prev_act:
+				prev_act = act
+			else:
+				act = "H"
 		act_lst.append(act)
 		if(i%update == 0):
 			print("Remaining:\t",-1*size-i)
