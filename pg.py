@@ -58,7 +58,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 
 	spltd = rd.split('\n')
 	del spltd[-1]
-	# del spltd[0]
+	del spltd[0]
+	print('Totalllllllllllllllllllllllllllllllllll', len(spltd))
 	data_sp = spltd[size:]
 
 	pd_lst = []
@@ -154,8 +155,8 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 			)
 
 
-size = 23646
-update = 1000
+size = 42961-2
+update = 10000
 starting_amonunt = 100.0
 exp_fn = 'v8.csv'
-prepare_dataset(raw_data_file_name='aapl.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
+prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
