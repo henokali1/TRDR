@@ -15,17 +15,16 @@ def timestamp_to_time(val):
 	return(tim[:-3])
 
 def percentage_diff(cp, pp):
-    return (100.0*(cp-pp))/pp
+    try:
+    	return (100.0*(cp-pp))/pp
+    except:
+    	return 0.0
 
 def action(c_pd, f_pd):
-	if((c_pd < 0) and (f_pd < 0)):
-		return 'H'
 	if((c_pd < 0) and (f_pd > 0)):
 		return 'B'
-	if((c_pd > 0) and (f_pd < 0)):
+	elif((c_pd > 0) and (f_pd < 0)):
 		return 'S'
-	if((c_pd > 0) and (f_pd > 0)):
-		return 'H'
 	else:
 		return 'H'
 
@@ -41,18 +40,18 @@ def write_csv(val, file_name):
 	except:
 		print("Couldn't export data :'(")
 
-def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, export_file_name):
+def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, pts_lst, ptf_lst, ats_lst, atf_lst, late_trade_pd_lst, export_file_name):
 	r=''
 
-	title = 'Time,Price,Pd,Action,LateAction\n'
+	title = 'Time,Price,Pd,PerfectAction,LateAction,pts_lst,ptf_lst,ats_lst,atf_lst,late_trade_pd_lst\n'
 	r += title
 	for i,val in enumerate(pd_lst):
 		if(i <= len(pd_lst)):
-			r += f'{time_lst[i]},{price_lst[i]},{pd_lst[i]},{act_lst[i]},{late_act[i]}\n'
+			r += f'{time_lst[i]},{price_lst[i]},{pd_lst[i]},{act_lst[i]},{late_act[i]},{pts_lst[i]},{ptf_lst[i]},{ats_lst[i]},{atf_lst[i]},{late_trade_pd_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
-def prepare_dataset(raw_data_file_name, size, update, export_file_name):
+def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting_amonunt):
 	size = -1*size
 	with open(raw_data_file_name,'r') as f:
 		rd = f.read()
@@ -67,6 +66,7 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 	act_lst = []
 	time_lst = []
 	prev_act = ''
+	first_time = True
 	for i, val in enumerate(data_sp):
 		sp = val.split(',')
 		open_price = float(sp[1])
@@ -89,15 +89,73 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name):
 				prev_act = act
 			else:
 				act = "H"
+		if first_time and act == 'S':
+			act = 'H'
+		if first_time and act == 'B':
+			first_time = False
 		act_lst.append(act)
 		if(i%update == 0):
 			print("Remaining:\t",-1*size-i)
 	late_act = ['H'] + act_lst[:-1]
-	chunk_data(time_lst=time_lst, pd_lst=pd_lst, price_lst=price_lst, act_lst=act_lst, late_act=late_act, export_file_name=export_file_name)
+	pts_lst=[]
+	ptf_lst=[]
+	ats_lst=[]
+	atf_lst=[]
+	fiat = starting_amonunt
+	share = 0.0
+	for i,val in enumerate(act_lst):
+		if val == 'B':
+			share = fiat/price_lst[i]
+			fiat=0.0
+		if val == 'S':
+			fiat = share*price_lst[i]
+			share=0.0
 
-size = 42959
+		pts_lst.append(share)
+		ptf_lst.append(fiat)
+
+
+	fiat_late = starting_amonunt
+	share_late = 0.0
+	for i,val in enumerate(late_act):
+		if val == 'B':
+			share_late = fiat_late/price_lst[i]
+			fiat_late=0.0
+		if val == 'S':
+			fiat_late = share_late*price_lst[i]
+			share_late=0.0
+
+
+		# print(i,val,price_lst[i],fiat_late,share_late)
+		ats_lst.append(share_late)
+		atf_lst.append(fiat_late)
+
+	late_trade_pd_lst = []
+	prev_late_price = 0.0
+	for i in range(len(atf_lst)):
+		if atf_lst[i] != 0:
+			late_pd = percentage_diff(atf_lst[i],prev_late_price)
+			prev_late_price = late_pd
+		else:
+			late_pd = percentage_diff(ats_lst[i]*price_lst[i],prev_late_price)
+			prev_late_price = ats_lst[i]*price_lst[i]
+		late_trade_pd_lst.append(prev_late_price)
+
+
+
+
+	chunk_data(
+			time_lst=time_lst, pd_lst=pd_lst,
+			price_lst=price_lst, act_lst=act_lst,
+			late_act=late_act,pts_lst=pts_lst,
+			ptf_lst=ptf_lst, ats_lst=ats_lst,
+			atf_lst=atf_lst, late_trade_pd_lst=late_trade_pd_lst,
+			export_file_name=export_file_name,
+			)
+
+
+size = 23646
 update = 1000
-
+starting_amonunt = 100.0
 exp_fn = 'v8.csv'
-
-prepare_dataset(raw_data_file_name='aapl.csv', export_file_name=exp_fn, size=size, update=update)
+prepare_dataset(raw_data_file_name='aapl.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
