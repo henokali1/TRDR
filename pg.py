@@ -1,6 +1,4 @@
 from datetime import datetime
-import inflect
-p = inflect.engine()
 
 def time_price(val):
 	ts = int(str(val[0])[:-3])
@@ -40,14 +38,14 @@ def write_csv(val, file_name):
 	except:
 		print("Couldn't export data :'(")
 
-def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, pts_lst, ptf_lst, ats_lst, atf_lst, late_trade_pd_lst, export_file_name):
+def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, pts_lst, ptf_lst, ats_lst, atf_lst, late_trade_pd_lst, nw_trd_act_lst, nw_trd_act_pd_lst, export_file_name):
 	r=''
 
-	title = 'Time,Price,Pd,PerfectAction,LateAction,pts_lst,ptf_lst,ats_lst,atf_lst,late_trade_pd_lst\n'
+	title = 'Time,Price,Pd,PerfectAction,LateAction,pts_lst,ptf_lst,ats_lst,atf_lst,late_trade_pd_lst,nw_trd_act_lst,nw_trd_pd_lst\n'
 	r += title
 	for i,val in enumerate(pd_lst):
 		if(i <= len(pd_lst)):
-			r += f'{time_lst[i]},{price_lst[i]},{pd_lst[i]},{act_lst[i]},{late_act[i]},{pts_lst[i]},{ptf_lst[i]},{ats_lst[i]},{atf_lst[i]},{late_trade_pd_lst[i]}\n'
+			r += f'{time_lst[i]},{price_lst[i]},{pd_lst[i]},{act_lst[i]},{late_act[i]},{pts_lst[i]},{ptf_lst[i]},{ats_lst[i]},{atf_lst[i]},{late_trade_pd_lst[i]},{nw_trd_act_lst[i]},{nw_trd_act_pd_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
@@ -59,7 +57,6 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 	spltd = rd.split('\n')
 	del spltd[-1]
 	del spltd[0]
-	print('Totalllllllllllllllllllllllllllllllllll', len(spltd))
 	data_sp = spltd[size:]
 
 	pd_lst = []
@@ -141,8 +138,54 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 			late_pd = percentage_diff(ats_lst[i]*price_lst[i],prev_late_price)
 			prev_late_price = ats_lst[i]*price_lst[i]
 		late_trade_pd_lst.append(prev_late_price)
+	
+	nw_trd_act_pd_lst = []
+	nw_trd_act_lst = []
+	buy_price = 0.0
+	sell_price = 0.0
+	nw_pd = 0.0
+	
+	b_lst = []
+	for i,val in enumerate(late_act):
+		if ((val == 'B') and (act_lst[i-1] == 'B') and (act_lst[i] == 'H')):
+			new_act = 'B'
+			buy_idx = i
+			buy_price = price_lst[i]
+			nw_pd = 0.0
+		elif ((val == 'S') and (act_lst[i-1] == 'S') and (act_lst[i] == 'H')):
+			sell_price = price_lst[i]
+			nw_pd = percentage_diff(sell_price, buy_price)
+			if nw_pd <= 0:
+				nw_pd=0.0
+			else:
+				new_act = 'S'
+		else:
+			new_act = 'H'
+			nw_pd = 0.0
+		if new_act == 'B':
+			b_lst.append(i+2)
+		nw_trd_act_lst.append(new_act)
+		nw_trd_act_pd_lst.append(nw_pd)
 
+	print('PD sum all : ', sum(nw_trd_act_pd_lst))
 
+	s=0.0
+	plst=[]
+	nlst = []
+	for idx,i in enumerate(nw_trd_act_pd_lst):
+		val = i
+		if i == 'B':
+			buy_idx = idx			
+		if i>0:
+			plst.append(i)
+			s+=i
+		else:
+			nw_trd_act_lst[buy_idx] = 'H'
+			nlst.append(i)
+			
+	print('PD +ve sum: ', s)
+
+	print(b_lst[0:10])
 
 
 	chunk_data(
@@ -151,12 +194,16 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 			late_act=late_act,pts_lst=pts_lst,
 			ptf_lst=ptf_lst, ats_lst=ats_lst,
 			atf_lst=atf_lst, late_trade_pd_lst=late_trade_pd_lst,
+			nw_trd_act_lst=nw_trd_act_lst,nw_trd_act_pd_lst=nw_trd_act_pd_lst,
 			export_file_name=export_file_name,
 			)
 
 
 size = 42961-2
+# size = 50
+days = 10
+# size = 60*24*days
 update = 10000
 starting_amonunt = 100.0
 exp_fn = 'v8.csv'
-prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
+prepare_dataset(raw_data_file_name='aapl.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
