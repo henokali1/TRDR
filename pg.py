@@ -38,14 +38,14 @@ def write_csv(val, file_name):
 	except:
 		print("Couldn't export data :'(")
 
-def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, pts_lst, ptf_lst, ats_lst, atf_lst, late_trade_pd_lst, nw_trd_act_lst, nw_trd_act_pd_lst, export_file_name):
+def chunk_data(time_lst, pd_lst, price_lst, act_lst, late_act, pts_lst, ptf_lst, ats_lst, atf_lst, late_trade_pd_lst, nw_trd_act_lst, nnpd, export_file_name):
 	r=''
 
-	title = 'Time,Price,Pd,PerfectAction,LateAction,pts_lst,ptf_lst,ats_lst,atf_lst,late_trade_pd_lst,nw_trd_act_lst,nw_trd_pd_lst\n'
+	title = 'Time,Price,Pd,PerfectAction,LateAction,pts_lst,ptf_lst,ats_lst,atf_lst,late_trade_pd_lst,nw_trd_act_lst,nnpd\n'
 	r += title
 	for i,val in enumerate(pd_lst):
 		if(i <= len(pd_lst)):
-			r += f'{time_lst[i]},{price_lst[i]},{pd_lst[i]},{act_lst[i]},{late_act[i]},{pts_lst[i]},{ptf_lst[i]},{ats_lst[i]},{atf_lst[i]},{late_trade_pd_lst[i]},{nw_trd_act_lst[i]},{nw_trd_act_pd_lst[i]}\n'
+			r += f'{time_lst[i]},{price_lst[i]},{pd_lst[i]},{act_lst[i]},{late_act[i]},{pts_lst[i]},{ptf_lst[i]},{ats_lst[i]},{atf_lst[i]},{late_trade_pd_lst[i]},{nw_trd_act_lst[i]},{nnpd[i]}\n'
 	write_csv(r, file_name=export_file_name)
 	
 	
@@ -124,7 +124,6 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 			share_late=0.0
 
 
-		# print(i,val,price_lst[i],fiat_late,share_late)
 		ats_lst.append(share_late)
 		atf_lst.append(fiat_late)
 
@@ -145,7 +144,6 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 	sell_price = 0.0
 	nw_pd = 0.0
 	
-	b_lst = []
 	for i,val in enumerate(late_act):
 		if ((val == 'B') and (act_lst[i-1] == 'B') and (act_lst[i] == 'H')):
 			new_act = 'B'
@@ -162,12 +160,9 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 		else:
 			new_act = 'H'
 			nw_pd = 0.0
-		if new_act == 'B':
-			b_lst.append(i+2)
 		nw_trd_act_lst.append(new_act)
 		nw_trd_act_pd_lst.append(nw_pd)
 
-	print('PD sum all : ', sum(nw_trd_act_pd_lst))
 
 	s=0.0
 	plst=[]
@@ -183,9 +178,66 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 			nw_trd_act_lst[buy_idx] = 'H'
 			nlst.append(i)
 			
-	print('PD +ve sum: ', s)
 
-	print(b_lst[0:10])
+
+
+	nl=[]
+	pbi = 0
+	pwb = False
+	for idx,val in enumerate(nw_trd_act_lst):
+		nl.append(val)
+		if (val == 'B') and (pwb == False):
+			pbi = idx
+			pwb = True
+		if (val == 'B') and (pwb == True):
+			nl[pbi] = 'H'
+			pbi = idx
+			pwb = True
+		if (val == 'S') and (pwb == True):
+			pwb = False
+
+	nnl=[]
+	pbs = 'H'
+	psi = 0
+	for i,val in enumerate(nl):
+		nnl.append(val)
+		c = val
+		p = pbs
+
+		if ((c == 'B') and (p == 'B')):
+			pbs = 'B'
+		if ((c == 'B') and (p == 'S')):
+			pbs = 'B'
+		
+		if ((c == 'S') and (p == 'B')):
+			pbs = 'S'
+			psi=i
+		if ((c == 'S') and (p == 'S')):
+			pbs='S'
+			nnl[psi]='H'
+			psi=i
+		if c in 'BS':
+			pbs=c
+	
+	nns=0.0
+	nnpd=[]
+	nnpp = 0.0
+	nncp = 0.0
+	for i,val in enumerate(nnl):
+		av = 0.0
+		if val == 'B':
+			nnpp=price_lst[i]
+		elif val == 'S':
+			nncp=price_lst[i]
+			av = (percentage_diff(nncp,nnpp))
+		else:
+			av = 0.0
+		nnpd.append(av)
+
+	print('NN +ve sum: ', sum(nnpd))
+
+	
+
 
 
 	chunk_data(
@@ -194,16 +246,15 @@ def prepare_dataset(raw_data_file_name, size, update, export_file_name, starting
 			late_act=late_act,pts_lst=pts_lst,
 			ptf_lst=ptf_lst, ats_lst=ats_lst,
 			atf_lst=atf_lst, late_trade_pd_lst=late_trade_pd_lst,
-			nw_trd_act_lst=nw_trd_act_lst,nw_trd_act_pd_lst=nw_trd_act_pd_lst,
-			export_file_name=export_file_name,
+			nw_trd_act_lst=nnl,nnpd=nnpd,export_file_name=export_file_name,
 			)
 
 
-size = 42961-2
+size = 100000
 # size = 50
 days = 10
 # size = 60*24*days
 update = 10000
 starting_amonunt = 100.0
 exp_fn = 'v8.csv'
-prepare_dataset(raw_data_file_name='aapl.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
+prepare_dataset(raw_data_file_name='raw_data.csv', export_file_name=exp_fn, size=size, update=update, starting_amonunt=starting_amonunt)
