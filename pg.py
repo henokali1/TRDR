@@ -16,17 +16,16 @@ def pay_load_format(val):
 	payload = {
 		"instances": [
 			{
-				"Price": float(sp[0]),
-				"Volume": float(sp[1]),
-				"Price_PD": float(sp[2]),
-				"Volume_PD": float(sp[3]),
-				"Price_PD_bn_Trades": float(sp[4]),
-				"Volume_PD_bn_Trades": float(sp[5]),
-				"Mins_bn_Trade": int(sp[6]),
-				"H_Price_PD": float(sp[7]),
-				"H_Price_PD_bn_Trades": float(sp[8]),
-				"H_Volume_PD_bn_Trades": float(sp[9]),
-				"H_Mins_bn_Trade": int(sp[10])
+				"PricePD": -0.013926689,
+				"PricePdBP": 0.019439075,
+				"trend_lst": "D",
+				"TrendHist": "D-D",
+				"TrendHistDownCount": 2,
+				"TrendHistUpCount": 0,
+				"TwoTrendHist": "D-D-D",
+				"TwoTrendHistDownCount": 3,
+				"TwoTrendHistUpCount": 0,
+				"nw_act_patt_lst": D
 			}
 		]
 	}
