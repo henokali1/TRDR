@@ -2,22 +2,22 @@ import requests
 import ast
 
 
-# def action(pp, cp, fp):
-# 	if ((cp < pp) and (cp < fp)):
-# 		return 'B'
-# 	elif ((cp > pp) and (cp > fp)):
-# 		return 'S'
-# 	else:
-# 		return 'H'
-
-
-def action(ct, ft):
-	if (ct == 'D') and (ft == 'U'):
+def action(pp, cp, fp):
+	if ((cp < pp) and (cp < fp)):
 		return 'B'
-	elif (ct == 'U') and (ft == 'D'):
+	elif ((cp > pp) and (cp > fp)):
 		return 'S'
 	else:
 		return 'H'
+
+
+# def action(ct, ft):
+# 	if (ct == 'D') and (ft == 'U'):
+# 		return 'B'
+# 	elif (ct == 'U') and (ft == 'D'):
+# 		return 'S'
+# 	else:
+# 		return 'H'
 
 def percentage_diff(cp, pp):
 	try:
@@ -48,9 +48,7 @@ def trend(cp, pp):
 def chunk_data(
 		price_lst,
 		price_pd_lst,
-		price_pd_bp_lst,
 		trend_lst,
-		tread_hist_lst,
 		act_lst,
 		share_lst,
 		fiat_lst,
@@ -58,44 +56,18 @@ def chunk_data(
 		profitable,
 		percentage_gain,
 		net_fiat_profit,
-		two_trend_hist_lst,
-		trend_hist_up_count_lst,
-		trend_hist_down_count_lst,
-		two_trend_hist_up_count_lst,
-		two_trend_hist_down_count_lst,
-		nw_act_lst,
-		nw_act_patt_lst,
-		model_pred_lst,
 		export_file_name,
 		):
-	r = f'Price,PricePD,PricePdBP,trend_lst,TrendHist,TrendHistUpCount,' + \
-		f'TrendHistDownCount,TwoTrendHist,TwoTrendHistUpCount,TwoTrendHistDownCount,' + \
-		f'PerfectAct,nw_act_lst,NewActPred,nw_act_patt_lst,Share,Fiat,StartingAmount,Profitable,' + \
-		f'Percentage Gain,Net Fiat Profit,NewShare,NewFiat,NewProfitable,' + \
-		f'NewPercentage Gain,NewNet Fiat Profit\n' + \
-		f',,,,,,,,,,,,,,0.0,{starting_amount},{starting_amount},{profitable},' + \
-		f'{percentage_gain},{net_fiat_profit},0.0,{starting_amount},NewProfitable,NewPercentage Gain,NewNet Fiat Profit\n'
+	r = f'Price,PricePD,Trend,PerfectAction,Share,Fiat,StartingAmount,Profitable,Percentage Gain,Net Fiat Profit\n' + \
+		f',,,,0.0,{starting_amount},{starting_amount},{profitable},' + \
+		f'{percentage_gain},{net_fiat_profit}\n'
 
-	for i,val in enumerate(price_pd_lst):
+	for i in range(len((price_pd_lst))):
 		if(i <= len(price_pd_lst)):
-			r += f'{price_lst[i]},{price_pd_lst[i]},{price_pd_bp_lst[i]},{trend_lst[i]},{tread_hist_lst[i]},' + \
-			f'{trend_hist_up_count_lst[i]},{trend_hist_down_count_lst[i]},{two_trend_hist_lst[i]},' + \
-			f'{two_trend_hist_up_count_lst[i]},{two_trend_hist_down_count_lst[i]},{act_lst[i]},{nw_act_lst[i]},' + \
-			f'{model_pred_lst[i]},{nw_act_patt_lst[i]},{share_lst[i]},{fiat_lst[i]},,,,,,,,,\n'
+			r += f'{price_lst[i]},{price_pd_lst[i]},{trend_lst[i]},' + \
+			f'{act_lst[i]},' + \
+			f'{share_lst[i]},{fiat_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
-
-
-def pred(payload):
-	# r = requests.post("http://34.83.91.155:8080/predict", json=payload).text
-	r = requests.post("http://localhost:8080/predict", json=payload).text
-	p = ast.literal_eval(r)
-	row_pred = p['predictions'][0]
-	scores = row_pred['scores']
-	classes = row_pred['classes']
-	confid_score = max(scores)
-	pred_index = scores.index(confid_score)
-	prediction = classes[pred_index]
-	return prediction
 
 def prepare_dataset(
 		raw_data_file_name,
@@ -103,11 +75,9 @@ def prepare_dataset(
 		update,
 		export_file_name,
 		starting_amount,
-		bt,st,
 		):
 	size = -1*size
 	fst = True
-	nw_fst = True
 	with open(raw_data_file_name,'r') as f:
 		rd = f.read()
 
@@ -118,32 +88,18 @@ def prepare_dataset(
 
 	act = 'H'
 	prev_bs = ''
-	nw_prev_bs = ''
-	prev_trend_hist = []
-	tread_idx = 0
 	prev_share = 0.0
-	bp=0.0
-	pbs='S'
 	prev_fiat = starting_amount
-	prev_act = 'H'
-	prev_act_idx = 0
+	
+	psi=0
+	pbi=0
 
 	price_pd_lst = []
-	price_pd_bp_lst = []
 	price_lst = []
 	trend_lst = []
-	tread_hist_lst = []
 	act_lst = []
 	share_lst=[]
 	fiat_lst=[]
-	two_trend_hist_lst=[]
-	trend_hist_up_count_lst = []
-	trend_hist_down_count_lst= []
-	two_trend_hist_up_count_lst = []
-	two_trend_hist_down_count_lst = []
-	nw_act_lst = []
-	nw_act_patt_lst = []
-	model_pred_lst=[]
 	for i, val in enumerate(data_sp):
 		sp = val.split(',')
 		open_price = float(sp[1])
@@ -155,30 +111,12 @@ def prepare_dataset(
 
 		fp = cp if i == len(data_sp) -1 else priv_price(data_sp[i+1])
 
-		if act != 'H':
-			tread_idx = i
 		
 		price_pd_lst.append(c_pd)
-		price_pd_bp_lst.append(percentage_diff(cp,bp))
 		price_lst.append(open_price)
 		trend_lst.append(trend(cp, pp))
-		tread_hist_lst.append('-'.join(trend_lst[tread_idx:]))
-		trend_hist_up_count_lst.append('-'.join(trend_lst[tread_idx:]).count('U'))
-		trend_hist_down_count_lst.append('-'.join(trend_lst[tread_idx:]).count('D'))
-		two_trend_hist_lst.append('-'.join(prev_trend_hist + trend_lst[tread_idx:]))
-		two_trend_hist_up_count_lst.append('-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('U'))
-		two_trend_hist_down_count_lst.append('-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('D'))
 
-		prev_trend_hist = trend_lst[tread_idx:]
 		act = action(pp, cp, fp)
-
-		
-		ct = trend_lst[-4:]
-
-        
-
-		# print('ct: ', ct)
-		# act = action(ct, bt, st, cp, bp, pbs)
 		if fst and (act == 'S'):
 			act = 'H'
 			fst = False
@@ -188,60 +126,7 @@ def prepare_dataset(
 			prev_bs = act
 		act_lst.append(act)
 
-		nw_act = prev_act+act
 
-		if nw_fst and (nw_act[-1] == 'S'):
-			nw_act = 'HH'
-			nw_fst = False
-			nw_act_lst.append('H')
-		else:
-			if nw_prev_bs == nw_act:
-				nw_act = 'HH'
-			if nw_act != 'HH':
-				nw_prev_bs = nw_act
-
-			if (nw_act == 'BS') or (nw_act == 'SB'):
-				nw_act_lst.append(nw_act[-1])
-			else:
-				nw_act_lst.append('H')
-		nw_act_patt = trend_lst[prev_act_idx:i]
-		nw_act_patt_lst.append('-'.join(nw_act_patt))
-
-		# val = {
-		# 	"PricePD": c_pd,
-		# 	"PricePdBP": percentage_diff(cp,bp),
-		# 	"trend_lst": trend(cp, pp),
-		# 	"TrendHist": '-'.join(trend_lst[tread_idx:]),
-		# 	"TrendHistDownCount": '-'.join(trend_lst[tread_idx:]).count('D'),
-		# 	"TrendHistUpCount": '-'.join(trend_lst[tread_idx:]).count('U'),
-		# 	"TwoTrendHist": '-'.join(prev_trend_hist + trend_lst[tread_idx:]),
-		# 	"TwoTrendHistDownCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('D'),
-		# 	"TwoTrendHistUpCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('U'),
-		# 	"nw_act_patt_lst": '-'.join(nw_act_patt),
-		# }
-
-		payload = {
-			"instances": [
-				{
-					"PricePD": c_pd,
-					"PricePdBP": percentage_diff(cp,bp),
-					"trend_lst": trend(cp, pp),
-					"TrendHist": '-'.join(trend_lst[tread_idx:]),
-					"TrendHistDownCount": '-'.join(trend_lst[tread_idx:]).count('D'),
-					"TrendHistUpCount": '-'.join(trend_lst[tread_idx:]).count('U'),
-					"TwoTrendHist": '-'.join(prev_trend_hist + trend_lst[tread_idx:]),
-					"TwoTrendHistDownCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('D'),
-					"TwoTrendHistUpCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('U'),
-					"nw_act_patt_lst": '-'.join(nw_act_patt),
-				}
-			]
-		}
-
-		model_pred_lst.append(pred(payload))
-
-		if prev_act != act:
-			prev_act = act
-			prev_act_idx = i
 
 		if(act == 'H'):
 			share_lst.append(prev_share)
@@ -251,17 +136,12 @@ def prepare_dataset(
 			share_lst.append(prev_share)
 			fiat_lst.append(0.0)
 			prev_fiat = 0.0
-			bp=cp
-			pbs = 'B'
+			
 		if act == 'S':
 			prev_fiat = cp*prev_share
 			share_lst.append(0.0)
 			fiat_lst.append(prev_fiat)
-			prev_share = 0.0
-			pbs = 'S'
-        
-        
-			
+			prev_share = 0.0    			
 
 
 		if(i%update == 0):
@@ -277,9 +157,7 @@ def prepare_dataset(
 	chunk_data(
 			price_lst=price_lst,
 			price_pd_lst=price_pd_lst,
-			price_pd_bp_lst=price_pd_bp_lst,
 			trend_lst=trend_lst,
-			tread_hist_lst=tread_hist_lst,
 			act_lst=act_lst,
 			share_lst=share_lst,
 			fiat_lst=fiat_lst,
@@ -287,20 +165,9 @@ def prepare_dataset(
 			profitable=profitable,
 			percentage_gain = percentage_gain,
 			net_fiat_profit=net_fiat_profit,
-			two_trend_hist_lst=two_trend_hist_lst,
-			trend_hist_up_count_lst=trend_hist_up_count_lst,
-			trend_hist_down_count_lst=trend_hist_down_count_lst,
-			two_trend_hist_up_count_lst=two_trend_hist_up_count_lst,
-			two_trend_hist_down_count_lst=two_trend_hist_down_count_lst,
-			nw_act_lst=nw_act_lst,
-			nw_act_patt_lst=nw_act_patt_lst,
-			model_pred_lst=model_pred_lst,
 			export_file_name=export_file_name,
 		)
 
-
-bt=['D','D','D','U']
-st=['U','U','D']
 
 # size = 1440*1
 size = 50
@@ -314,6 +181,4 @@ prepare_dataset(
 		size=size,
 		update=update,
 		starting_amount=starting_amount,
-		bt=bt,
-		st=st
 		)
