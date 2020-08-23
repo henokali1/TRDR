@@ -2,10 +2,19 @@ import requests
 import ast
 
 
-def action(pp, cp, fp):
-	if ((cp < pp) and (cp < fp)):
+# def action(pp, cp, fp):
+# 	if ((cp < pp) and (cp < fp)):
+# 		return 'B'
+# 	elif ((cp > pp) and (cp > fp)):
+# 		return 'S'
+# 	else:
+# 		return 'H'
+
+
+def action(ct, ft):
+	if (ct == 'D') and (ft == 'U'):
 		return 'B'
-	elif ((cp > pp) and (cp > fp)):
+	elif (ct == 'U') and (ft == 'D'):
 		return 'S'
 	else:
 		return 'H'
@@ -297,7 +306,7 @@ st=['U','U','D']
 size = 50
 update = 10000
 starting_amount = 100.0
-exp_fn = 'v9-1-tst.csv'
+exp_fn = 'v10.csv'
 
 prepare_dataset(
 		raw_data_file_name='raw_data.csv',
