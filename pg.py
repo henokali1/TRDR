@@ -190,25 +190,25 @@ def prepare_dataset(
 	# print('Sell: ', sp_cntr_srtd)
 	write_csv(str(bp_cntr_srtd), 'v10-buy-count.txt')
 	write_csv(str(sp_cntr_srtd), 'v10-sell-count.txt')
-	# chunk_data(
-	# 		price_lst=price_lst,
-	# 		price_pd_lst=price_pd_lst,
-	# 		trend_lst=trend_lst,
-	# 		act_lst=act_lst,
-	# 		share_lst=share_lst,
-	# 		fiat_lst=fiat_lst,
-	# 		starting_amount=starting_amount,
-	# 		profitable=profitable,
-	# 		percentage_gain = percentage_gain,
-	# 		net_fiat_profit=net_fiat_profit,
-	# 		patt_one_lst=patt_one_lst,
-	# 		patt_two_lst=patt_two_lst,
-	# 		export_file_name=export_file_name,
-	# 	)
+	chunk_data(
+			price_lst=price_lst,
+			price_pd_lst=price_pd_lst,
+			trend_lst=trend_lst,
+			act_lst=act_lst,
+			share_lst=share_lst,
+			fiat_lst=fiat_lst,
+			starting_amount=starting_amount,
+			profitable=profitable,
+			percentage_gain = percentage_gain,
+			net_fiat_profit=net_fiat_profit,
+			patt_one_lst=patt_one_lst,
+			patt_two_lst=patt_two_lst,
+			export_file_name=export_file_name,
+		)
 
 
-size = int(1440*365*2.7)
-# size = 50
+# size = int(1440*365*2.7)
+size = 100000
 update = 100000
 starting_amount = 100.0
 exp_fn = 'v10.csv'
