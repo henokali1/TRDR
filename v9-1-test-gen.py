@@ -10,14 +10,6 @@ def action(pp, cp, fp):
 	else:
 		return 'H'
 
-# def action(ct, bt, st, cp, bp, pbs):
-# 	if ((ct == bt) and (pbs == 'S')):
-# 		return 'B'
-# 	elif (((ct == st) or (cp < bp)) and (pbs == 'B')):
-# 		return 'S'
-# 	else:
-# 		return 'H'
-
 def percentage_diff(cp, pp):
 	try:
 		return (100.0*(cp-pp))/pp
