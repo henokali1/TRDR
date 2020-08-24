@@ -192,7 +192,7 @@ def prepare_dataset(
 	percentage_gain = round((100*fiat_lst[-1]/starting_amount)-100,2) if fiat_lst[-1] != 0 else round((100*share_lst[-1]*cp/starting_amount)-100,2)
 	net_fiat_profit = round(fiat_lst[-1]-starting_amount,2) if fiat_lst[-1] != 0.0 else share_lst[-1]*cp - starting_amount
 
-	print('profitable: ', percentage_gain, '%') if profitable else print('not profitable: ', percentage_gain, '%')
+	print('profitable: ', f'{round(percentage_gain,2)}%', f'${int(net_fiat_profit)}') if profitable else print('not profitable: ', percentage_gain, '%')
 	bp_cntr_srtd=sorted(bp_cntr.items(), key=lambda x: x[1], reverse=True)
 	sp_cntr_srtd=sorted(sp_cntr.items(), key=lambda x: x[1], reverse=True)
 
