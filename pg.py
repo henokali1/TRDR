@@ -12,16 +12,16 @@ import ast
 
 
 def action(buy, sell, trend_lst):
-	b_patt = '-'.join(trend_lst[1 + (-1*len(buy)):])
-	s_patt = '-'.join(trend_lst[1 + (-1*len(sell)):])
-	b_comp = (buy == b_patt)
-	s_comp = (sell == s_patt)
-	if b_comp:
-		return 'B'
-	elif s_comp:
-		return 'S'
-	else:
-		return 'H'
+	for i in buy:
+		b_patt = '-'.join(trend_lst[1 + (-1*len(i)):])
+		s_patt = '-'.join(trend_lst[1 + (-1*len(i)):])
+		b_comp = (i == b_patt)
+		s_comp = (i == s_patt)
+		if b_comp:
+			return 'B'
+		if s_comp:
+			return 'S'
+	return 'H'
 
 def percentage_diff(cp, pp):
 	try:
@@ -80,8 +80,8 @@ def prepare_dataset(
 		update,
 		export_file_name,
 		starting_amount,
-		buy_patt_one,
-		sell_patt_one,
+		buy_patt_lst,
+		sell_patt_lst,
 		):
 	size = -1*size
 	fst = True
@@ -97,7 +97,6 @@ def prepare_dataset(
 	prev_bs = ''
 	prev_share = 0.0
 	prev_fiat = starting_amount
-	cntr = 0
 	
 	psi=0
 	pbi=0
@@ -128,7 +127,7 @@ def prepare_dataset(
 		price_lst.append(open_price)
 		trend_lst.append(trend(cp, pp))
 
-		act = action(buy_patt_one, sell_patt_one, trend_lst)
+		act = action(buy_patt_lst, sell_patt_lst, trend_lst)
 		if fst and (act == 'S'):
 			act = 'H'
 			fst = False
@@ -193,34 +192,35 @@ def prepare_dataset(
 	net_fiat_profit = round(fiat_lst[-1]-starting_amount,2) if fiat_lst[-1] != 0.0 else share_lst[-1]*cp - starting_amount
 
 	print('profitable: ', f'{round(percentage_gain,2)}%', f'${int(net_fiat_profit)}') if profitable else print('not profitable: ', percentage_gain, '%')
-	bp_cntr_srtd=sorted(bp_cntr.items(), key=lambda x: x[1], reverse=True)
-	sp_cntr_srtd=sorted(sp_cntr.items(), key=lambda x: x[1], reverse=True)
+	# bp_cntr_srtd=sorted(bp_cntr.items(), key=lambda x: x[1], reverse=True)
+	# sp_cntr_srtd=sorted(sp_cntr.items(), key=lambda x: x[1], reverse=True)
 
 
 	# write_csv(str(bp_cntr_srtd), 'v10-buy-count.txt')
 	# write_csv(str(sp_cntr_srtd), 'v10-sell-count.txt')
 
 
-	chunk_data(
-			price_lst=price_lst,
-			price_pd_lst=price_pd_lst,
-			trend_lst=trend_lst,
-			act_lst=act_lst,
-			share_lst=share_lst,
-			fiat_lst=fiat_lst,
-			starting_amount=starting_amount,
-			profitable=profitable,
-			percentage_gain = percentage_gain,
-			net_fiat_profit=net_fiat_profit,
-			patt_one_lst=patt_one_lst,
-			patt_two_lst=patt_two_lst,
-			export_file_name=export_file_name,
-		)
+	# chunk_data(
+	# 		price_lst=price_lst,
+	# 		price_pd_lst=price_pd_lst,
+	# 		trend_lst=trend_lst,
+	# 		act_lst=act_lst,
+	# 		share_lst=share_lst,
+	# 		fiat_lst=fiat_lst,
+	# 		starting_amount=starting_amount,
+	# 		profitable=profitable,
+	# 		percentage_gain = percentage_gain,
+	# 		net_fiat_profit=net_fiat_profit,
+	# 		patt_one_lst=patt_one_lst,
+	# 		patt_two_lst=patt_two_lst,
+	# 		export_file_name=export_file_name,
+	# 	)
 
-buy_patt_one = 'D-U'
-sell_patt_one = 'U-D'
-# size = int(1440*365*2.7)
-size = 1440
+buy_patt_lst = ['D-U']
+sell_patt_lst = ['U-D']
+# size = in
+# t(1440*365*2.7)
+size = 1440*30*12
 update = 100000
 starting_amount = 100.0
 exp_fn = 'v10.csv'
@@ -231,6 +231,6 @@ prepare_dataset(
 		size=size,
 		update=update,
 		starting_amount=starting_amount,
-		buy_patt_one=buy_patt_one,
-		sell_patt_one=sell_patt_one,
+		buy_patt_lst=buy_patt_lst,
+		sell_patt_lst=sell_patt_lst,
 		)
