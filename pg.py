@@ -91,6 +91,7 @@ def prepare_dataset(
 	prev_bs = ''
 	prev_share = 0.0
 	prev_fiat = starting_amount
+	cntr = 0
 	
 	psi=0
 	pbi=0
@@ -150,7 +151,7 @@ def prepare_dataset(
 		if act == 'B':
 			po='-'.join(trend_lst[psi:i])
 			pt='-'.join(trend_lst[pbi:psi])
-			pot=po+':'+pt
+			pot=pt+'-'+po
 			if pot in bp_cntr:
 				bp_cntr[pot] += 1
 			else:
@@ -159,7 +160,7 @@ def prepare_dataset(
 		if act == 'S':
 			po='-'.join(trend_lst[pbi:i])
 			pt='-'.join(trend_lst[psi:pbi])
-			pot=po+':'+pt
+			pot=pt+'-'+po
 			if pot in sp_cntr:
 				sp_cntr[pot] += 1
 			else:
@@ -170,6 +171,16 @@ def prepare_dataset(
 			pt='-'
 		patt_one_lst.append(po)
 		patt_two_lst.append(pt)
+
+		pb_one = 'D-U'
+		patt = '-'.join(trend_lst[1 + (-1*len(pb_one)):])
+		if pb_one == patt:
+			cntr += 1
+			print(cntr, patt)
+		# current_patt = '-'.join(trend_lst[i-3:i])
+		# print(current_patt)
+		# bp1 = 'U:D'.replace(':','-')
+		# print(pb1 == )
 		
 		
 
@@ -180,35 +191,33 @@ def prepare_dataset(
 	net_fiat_profit = round(fiat_lst[-1]-starting_amount,2) if fiat_lst[-1] != 0.0 else share_lst[-1]*cp - starting_amount
 
 	print('profitable: ', percentage_gain, '%') if profitable else print('not profitable: ', percentage_gain, '%')
-	# print('bp_cntr', bp_cntr)
-	# print('sp_cntr', sp_cntr)
 	bp_cntr_srtd=sorted(bp_cntr.items(), key=lambda x: x[1], reverse=True)
 	sp_cntr_srtd=sorted(sp_cntr.items(), key=lambda x: x[1], reverse=True)
-	# print('\n\n')
-	# print('Buy: ', bp_cntr_srtd)
-	# print('\n\n')
-	# print('Sell: ', sp_cntr_srtd)
-	write_csv(str(bp_cntr_srtd), 'v10-buy-count.txt')
-	write_csv(str(sp_cntr_srtd), 'v10-sell-count.txt')
-	chunk_data(
-			price_lst=price_lst,
-			price_pd_lst=price_pd_lst,
-			trend_lst=trend_lst,
-			act_lst=act_lst,
-			share_lst=share_lst,
-			fiat_lst=fiat_lst,
-			starting_amount=starting_amount,
-			profitable=profitable,
-			percentage_gain = percentage_gain,
-			net_fiat_profit=net_fiat_profit,
-			patt_one_lst=patt_one_lst,
-			patt_two_lst=patt_two_lst,
-			export_file_name=export_file_name,
-		)
+
+
+	# write_csv(str(bp_cntr_srtd), 'v10-buy-count.txt')
+	# write_csv(str(sp_cntr_srtd), 'v10-sell-count.txt')
+
+
+	# chunk_data(
+	# 		price_lst=price_lst,
+	# 		price_pd_lst=price_pd_lst,
+	# 		trend_lst=trend_lst,
+	# 		act_lst=act_lst,
+	# 		share_lst=share_lst,
+	# 		fiat_lst=fiat_lst,
+	# 		starting_amount=starting_amount,
+	# 		profitable=profitable,
+	# 		percentage_gain = percentage_gain,
+	# 		net_fiat_profit=net_fiat_profit,
+	# 		patt_one_lst=patt_one_lst,
+	# 		patt_two_lst=patt_two_lst,
+	# 		export_file_name=export_file_name,
+	# 	)
 
 
 # size = int(1440*365*2.7)
-size = 100000
+size = 50
 update = 100000
 starting_amount = 100.0
 exp_fn = 'v10.csv'
