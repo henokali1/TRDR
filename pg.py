@@ -1,25 +1,30 @@
 import ast
 
+def srt(lst): 
+	lst2 = sorted(lst, key=len) 
+	return lst2[::-1]
+
 def read_file(file_name):
 	with open(file_name,'r') as f:
 		rd = f.read()
 	return rd
 
-# def action(pp, cp, fp):
-# 	if ((cp < pp) and (cp < fp)):
-# 		return 'B'
-# 	elif ((cp > pp) and (cp > fp)):
-# 		return 'S'
-# 	else:
-# 		return 'H'
+def perfect_action(pp, cp, fp):
+	if ((cp < pp) and (cp < fp)):
+		return 'B'
+	elif ((cp > pp) and (cp > fp)):
+		return 'S'
+	else:
+		return 'H'
 
 
-def action(b, s, trend_lst):
+def algo_action(b, s, trend_lst):
 	for i in range(len(b)):
 		bc='-'.join(trend_lst[(-1*len(b[i].replace('-',''))):])
+		# print(f'b[i]={b[i]}-------bc={bc}')
 		if(b[i] == bc):
 			return 'B'
-
+	
 	for i in range(len(s)):
 		sc='-'.join(trend_lst[(-1*len(s[i].replace('-',''))):])		
 		if(s[i] == sc):
@@ -67,16 +72,18 @@ def chunk_data(
 		patt_one_lst,
 		patt_two_lst,
 		full_cycle_lst,
+		algo_action_lst,
+		equals_lst,
 		export_file_name,
 		):
-	r = f'Price,PricePD,Trend,PerfectAction,patt_one_lst,patt_two_lst,full_cycle_lst,Share,Fiat,StartingAmount,Profitable,Percentage Gain,Net Fiat Profit\n' + \
-		f',,,,,,,0.0,{starting_amount},{starting_amount},{profitable},' + \
+	r = f'Price,PricePD,Trend,perfect_action_lst,algo_action_lst,equals_lst,patt_one_lst,patt_two_lst,full_cycle_lst,Share,Fiat,StartingAmount,Profitable,Percentage Gain,Net Fiat Profit\n' + \
+		f',,,,,,,,,0.0,{starting_amount},{starting_amount},{profitable},' + \
 		f'{percentage_gain},{net_fiat_profit}\n'
 
 	for i in range(len((price_pd_lst))):
 		if(i <= len(price_pd_lst)):
-			r += f'{price_lst[i]},{price_pd_lst[i]},{trend_lst[i]},{act_lst[i]},' + \
-			f'{patt_one_lst[i]},{patt_two_lst[i]},{full_cycle_lst[i]},{share_lst[i]},{fiat_lst[i]}\n'
+			r += f'{price_lst[i]},{price_pd_lst[i]},{trend_lst[i]},{act_lst[i]},{algo_action_lst[i]},' + \
+			f'{equals_lst[i]},{patt_one_lst[i]},{patt_two_lst[i]},{full_cycle_lst[i]},{share_lst[i]},{fiat_lst[i]}\n'
 	write_csv(r, file_name=export_file_name)
 
 def prepare_dataset(
@@ -118,6 +125,8 @@ def prepare_dataset(
 	patt_one_lst=[]
 	patt_two_lst=[]
 	full_cycle_lst=[]
+	algo_action_lst=[]
+	equals_lst=[]
 	for i, val in enumerate(data_sp):
 		sp = val.split(',')
 		open_price = float(sp[1])
@@ -134,8 +143,11 @@ def prepare_dataset(
 		price_lst.append(open_price)
 		trend_lst.append(trend(cp, pp))
 
-		act = action(b,s,trend_lst)
-		# act = action(pp, cp, fp)
+		algo_act = algo_action(b,s,trend_lst)
+		algo_action_lst.append(algo_act)
+		act = perfect_action(pp, cp, fp)
+		# algo_act = algo_action(b,s,trend_lst)
+		# algo_action_lst.append(algo_act)
 		if fst and (act == 'S'):
 			act = 'H'
 			fst = False
@@ -158,7 +170,7 @@ def prepare_dataset(
 			prev_fiat = cp*prev_share
 			share_lst.append(0.0)
 			fiat_lst.append(prev_fiat)
-			prev_share = 0.0    
+			prev_share = 0.0	
 
 		if act == 'B':
 			po='-'.join(trend_lst[psi:i+1])
@@ -183,7 +195,7 @@ def prepare_dataset(
 		if act == 'H':
 			po='-'
 			pt='-'
-
+		equals_lst.append(act==algo_act)
 		patt_one_lst.append(po)
 		patt_two_lst.append(pt)
 		full_cycle_lst.append(pt[:-1]+po)
@@ -229,14 +241,16 @@ def prepare_dataset(
 			patt_one_lst=patt_one_lst,
 			patt_two_lst=patt_two_lst,
 			full_cycle_lst=full_cycle_lst,
+			algo_action_lst=algo_action_lst,
+			equals_lst=equals_lst,
 			export_file_name=export_file_name,
 		)
 
-b=ast.literal_eval(read_file('v10-buy-patt-lst.txt'))
-s=ast.literal_eval(read_file('v10-sell-patt-lst.txt'))
+b=srt(ast.literal_eval(read_file('v10-buy-patt-lst.txt')))
+s=srt(ast.literal_eval(read_file('v10-sell-patt-lst.txt')))
 
 # size = int(1440*365*2.8)
-size = 50
+size = 1440*30
 update = 100000
 starting_amount = 100.0
 exp_fn = 'v10.csv'
