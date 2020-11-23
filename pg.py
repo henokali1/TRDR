@@ -24,7 +24,8 @@ chrome_options.add_argument("--hide-scrollbars")
 driver = webdriver.Chrome(executable_path='chromedriver.exe')
 driver = webdriver.Chrome(options=chrome_options)
 
-for i in range(4):
+for i in range(5):
+# while 1:
     driver.get(url)
     #pause 5 second to let page loads
     time.sleep(5)
@@ -32,5 +33,5 @@ for i in range(4):
     # file name
     fn = str(int(time.time()))
     #save screenshot
-    driver.save_screenshot(f'screenshot/{fn}.png')
+    driver.save_screenshot(f'../../dataset/{fn}.png')
 driver.close()
