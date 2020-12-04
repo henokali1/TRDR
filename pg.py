@@ -2,9 +2,10 @@ from selenium import webdriver
 from PIL import Image
 from selenium.webdriver.chrome.options import Options
 import time
+import platform
 
 url = 'https://www.binance.com/en/trade/BTC_BUSD'
-
+fst = True
 #run first time to get scrollHeight
 driver = webdriver.Chrome()
 driver.get(url)
@@ -21,17 +22,27 @@ chrome_options = Options()
 chrome_options.add_argument("--headless")
 chrome_options.add_argument(f"--window-size=1920,{height}")
 chrome_options.add_argument("--hide-scrollbars")
-driver = webdriver.Chrome(executable_path='chromedriver.exe')
+ptfrm = platform.platform()
+if 'Linux' in ptfrm:
+    driver = webdriver.Chrome(executable_path='chromedriver')
+else:
+    driver = webdriver.Chrome(executable_path='chromedriver.exe')
 driver = webdriver.Chrome(options=chrome_options)
-
-for i in range(5):
-# while 1:
+dataset_dir = '/home/ubuntu/Documents/Projects/TRDR/raw-dataset/'
+# for i in range(5):
+while 1:
     driver.get(url)
     #pause 5 second to let page loads
-    time.sleep(5)
-
+    time.sleep(60)
+    pl=driver.find_elements_by_class_name("css-8t380c")
+    price = pl[0].text.split('\n')[0].replace(',','')
     # file name
-    fn = str(int(time.time()))
+    fn = dataset_dir + str(int(time.time())) + '-' + price + '-'
+    # if fst:
+    #     pass
+    # else:
+    #     fst = False
     #save screenshot
-    driver.save_screenshot(f'../../dataset/{fn}.png')
+    driver.save_screenshot(f'{fn}.png')
 driver.close()
+# 26.51
