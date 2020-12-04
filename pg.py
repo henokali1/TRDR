@@ -31,11 +31,13 @@ driver.get(url)
 # time.sleep(1)
 # driver.find_elements_by_class_name("css-1ovzusp")[0].click()
 time.sleep(30)
-
-for i in range(10):
+cntr = 0
+# for i in range(10):
+while 1:
     price = driver.title.split(' | ')[0].replace(',','')
     fn = dataset_dir + str(int(time.time())) + '-' + price + '-'
     driver.save_screenshot(f'{fn}.png')
     time.sleep(10)
-    print(i)
+    cntr += 1
+    print(cntr, fn)
 driver.close()
