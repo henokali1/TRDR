@@ -37,7 +37,7 @@ while 1:
     price = driver.title.split(' | ')[0].replace(',','')
     fn = dataset_dir + str(int(time.time())) + '-' + price + '-'
     driver.save_screenshot(f'{fn}.png')
-    time.sleep(10)
+    time.sleep(60)
     cntr += 1
     print(cntr, fn)
 driver.close()
