@@ -25,12 +25,15 @@ chrome_options.add_argument("--hide-scrollbars")
 ptfrm = platform.platform()
 if 'Linux' in ptfrm:
     driver = webdriver.Chrome(executable_path='chromedriver')
+    dataset_dir = '/home/ubuntu/Documents/Projects/TRDR/raw-dataset/'
 else:
     driver = webdriver.Chrome(executable_path='chromedriver.exe')
+    dataset_dir = 'raw-dataset/'
 driver = webdriver.Chrome(options=chrome_options)
-dataset_dir = '/home/ubuntu/Documents/Projects/TRDR/raw-dataset/'
-# for i in range(5):
-while 1:
+
+cntr = 0
+for i in range(5):
+# while 1:
     driver.get(url)
     #pause 5 second to let page loads
     time.sleep(60)
@@ -44,5 +47,7 @@ while 1:
     #     fst = False
     #save screenshot
     driver.save_screenshot(f'{fn}.png')
+    cntr += 1
+    print(cntr, fn)
 driver.close()
 # 26.51
