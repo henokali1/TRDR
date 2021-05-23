@@ -7,11 +7,12 @@ import pickle
 import platform
 
 
-
 min_mc = 1000000000
 
 def get_lc_key():
-    fn = 'C:/Users/HENOK/Documents/Bkey/lc-key.pickle'
+    pt = platform.system()
+    fn = 'C:/Users/HENOK/Documents/Bkey/lc-key.pickle' if pt == 'Windows' else '/home/ubuntu/Bkey/lc-key.pickle'
+    val = read_pickle_file(fn)
     return read_pickle_file(fn)['lc_key']
 
 
@@ -69,14 +70,51 @@ def get_usdt_balance(client, coin):
             return {'free': free, 'locked': locked}
 
 
+def get_current_price(client, pair):
+    ts = int(time.time())*1000
+    to_date = int(time.time())
+    from_date = to_date - 1
+    price = get_historical_data(client, pair, from_date, to_date)
+    print(price)
+
+def get_usdt_pair_coins(client):
+	r=[]
+	exchange_info = client.get_exchange_info()
+	for s in exchange_info['symbols']:
+		pair = s['symbol']
+		if pair[-4:] == 'USDT':
+			r.append(pair[:-4])
+	return r
+
+def get_quantity(client, pair):
+    price = get_current_price(client, pair)
+
+def buy(client, pair, quantity):
+    order = client.creat_order(
+        symbol=pair,
+        side='SIDE_BUY',
+        type='ORDER_TYPE_MARKET',
+        quantity=quantity
+    )
+
 client = get_client()
 min_usdt = 50.0
 filtered_coins = ['USDT', 'BUSD']
-usdt_balance = get_usdt_balance(client, 'USDT')['free']
-if usdt_balance > min_usdt:
-    print('Can Place Order: $', usdt_balance)
-    trending_coins = get_trending_coins()
-    print('trending_coins: ', trending_coins)
-    
-else:
-    print('insufficient USDT: $', usdt_balance)
+trending_coins = get_trending_coins()
+all_coins = get_usdt_pair_coins(client)
+
+print('trending_coins: ', trending_coins)
+# for coin in trending_coins:
+#     usdt_balance = get_usdt_balance(client, 'USDT')['free']
+#     if (usdt_balance > min_usdt):
+#         if(coin in all_coins):
+#             print('Can Place Order: $', usdt_balance)
+#             print('Can buy ', coin)
+#             pair = coin+'USDT'
+#             get_current_price(client, pair)
+#         else:
+#             print(coin, ' not in binance')
+#     else:
+#         print('insufficient USDT: $', usdt_balance)
+#         break
+get_quantity(client, 'ADAUSDT')
