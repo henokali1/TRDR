@@ -77,9 +77,6 @@ if usdt_balance > min_usdt:
     print('Can Place Order: $', usdt_balance)
     trending_coins = get_trending_coins()
     print('trending_coins: ', trending_coins)
-    no_of_orders = int(usdt_balance/min_usdt)
-    print('no_of_orders: ', no_of_orders)
-    for i in range(no_of_orders):
-        print(trending_coins[i])
+    
 else:
     print('insufficient USDT: $', usdt_balance)
