@@ -1,0 +1,310 @@
+import requests
+import ast
+
+
+def action(pp, cp, fp):
+	if ((cp < pp) and (cp < fp)):
+		return 'B'
+	elif ((cp > pp) and (cp > fp)):
+		return 'S'
+	else:
+		return 'H'
+
+def percentage_diff(cp, pp):
+	try:
+		return (100.0*(cp-pp))/pp
+	except:
+		return 0.0
+
+def priv_price(val):
+	sp = val.split(',')
+	return float(sp[1])
+
+def write_csv(val, file_name):
+	try:
+		with open(file_name, 'w') as the_file:
+			the_file.write(val)
+			print(file_name + ' exported')
+	except:
+		print("Couldn't export data :'(")
+
+def trend(cp, pp):
+	if cp > pp:
+		return "U"
+	elif cp < pp:
+		return "D"
+	else:
+		return "N"
+
+def chunk_data(
+		price_lst,
+		price_pd_lst,
+		price_pd_bp_lst,
+		trend_lst,
+		tread_hist_lst,
+		act_lst,
+		share_lst,
+		fiat_lst,
+		starting_amount,
+		profitable,
+		percentage_gain,
+		net_fiat_profit,
+		two_trend_hist_lst,
+		trend_hist_up_count_lst,
+		trend_hist_down_count_lst,
+		two_trend_hist_up_count_lst,
+		two_trend_hist_down_count_lst,
+		nw_act_lst,
+		nw_act_patt_lst,
+		model_pred_lst,
+		export_file_name,
+		):
+	r = f'Price,PricePD,PricePdBP,trend_lst,TrendHist,TrendHistUpCount,' + \
+		f'TrendHistDownCount,TwoTrendHist,TwoTrendHistUpCount,TwoTrendHistDownCount,' + \
+		f'PerfectAct,nw_act_lst,nw_act_patt_lst,Share,Fiat,StartingAmount,Profitable,' + \
+		f'Percentage Gain,Net Fiat Profit,NewShare,NewFiat,NewProfitable,' + \
+		f'NewPercentage Gain,NewNet Fiat Profit,NewActPred\n' + \
+		f',,,,,,,,,,,,,0.0,{starting_amount},{starting_amount},{profitable},' + \
+		f'{percentage_gain},{net_fiat_profit},0.0,{starting_amount},NewProfitable,NewPercentage Gain,NewNet Fiat Profit\n'
+
+	for i,val in enumerate(price_pd_lst):
+		if(i <= len(price_pd_lst)):
+			r += f'{price_lst[i]},{price_pd_lst[i]},{price_pd_bp_lst[i]},{trend_lst[i]},{tread_hist_lst[i]},' + \
+			f'{trend_hist_up_count_lst[i]},{trend_hist_down_count_lst[i]},{two_trend_hist_lst[i]},' + \
+			f'{two_trend_hist_up_count_lst[i]},{two_trend_hist_down_count_lst[i]},{act_lst[i]},{nw_act_lst[i]},' + \
+			f'{nw_act_patt_lst[i]},{share_lst[i]},{fiat_lst[i]},,,,,,,,,,{model_pred_lst[i]}\n'
+	write_csv(r, file_name=export_file_name)
+
+
+def pred(payload):
+	# r = requests.post("http://34.83.91.155:8080/predict", json=payload).text
+	r = requests.post("http://localhost:8080/predict", json=payload).text
+	p = ast.literal_eval(r)
+	row_pred = p['predictions'][0]
+	scores = row_pred['scores']
+	classes = row_pred['classes']
+	confid_score = max(scores)
+	pred_index = scores.index(confid_score)
+	prediction = classes[pred_index]
+	return prediction
+
+def prepare_dataset(
+		raw_data_file_name,
+		size,
+		update,
+		export_file_name,
+		starting_amount,
+		bt,st,
+		):
+	size = -1*size
+	fst = True
+	nw_fst = True
+	with open(raw_data_file_name,'r') as f:
+		rd = f.read()
+
+	spltd = rd.split('\n')
+	del spltd[-1]
+	# del spltd[0]
+	data_sp = spltd[size:]
+
+	act = 'H'
+	prev_bs = ''
+	nw_prev_bs = ''
+	prev_trend_hist = []
+	tread_idx = 0
+	prev_share = 0.0
+	bp=0.0
+	pbs='S'
+	prev_fiat = starting_amount
+	prev_act = 'H'
+	prev_act_idx = 0
+
+	price_pd_lst = []
+	price_pd_bp_lst = []
+	price_lst = []
+	trend_lst = []
+	tread_hist_lst = []
+	act_lst = []
+	share_lst=[]
+	fiat_lst=[]
+	two_trend_hist_lst=[]
+	trend_hist_up_count_lst = []
+	trend_hist_down_count_lst= []
+	two_trend_hist_up_count_lst = []
+	two_trend_hist_down_count_lst = []
+	nw_act_lst = []
+	nw_act_patt_lst = []
+	model_pred_lst=[]
+	for i, val in enumerate(data_sp):
+		sp = val.split(',')
+		open_price = float(sp[1])
+
+		pp = open_price if i == 0 else priv_price(data_sp[i-1])
+
+		cp = open_price
+		c_pd = percentage_diff(cp, pp)
+
+		fp = cp if i == len(data_sp) -1 else priv_price(data_sp[i+1])
+
+		if act != 'H':
+			tread_idx = i
+		
+		price_pd_lst.append(c_pd)
+		price_pd_bp_lst.append(percentage_diff(cp,bp))
+		price_lst.append(open_price)
+		trend_lst.append(trend(cp, pp))
+		tread_hist_lst.append('-'.join(trend_lst[tread_idx:]))
+		trend_hist_up_count_lst.append('-'.join(trend_lst[tread_idx:]).count('U'))
+		trend_hist_down_count_lst.append('-'.join(trend_lst[tread_idx:]).count('D'))
+		two_trend_hist_lst.append('-'.join(prev_trend_hist + trend_lst[tread_idx:]))
+		two_trend_hist_up_count_lst.append('-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('U'))
+		two_trend_hist_down_count_lst.append('-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('D'))
+
+		prev_trend_hist = trend_lst[tread_idx:]
+		act = action(pp, cp, fp)
+
+		
+		ct = trend_lst[-4:]
+
+        
+
+		# print('ct: ', ct)
+		# act = action(ct, bt, st, cp, bp, pbs)
+		if fst and (act == 'S'):
+			act = 'H'
+			fst = False
+		if prev_bs == act:
+			act = 'H'
+		if act != 'H':
+			prev_bs = act
+		act_lst.append(act)
+
+		nw_act = prev_act+act
+
+		if nw_fst and (nw_act[-1] == 'S'):
+			nw_act = 'HH'
+			nw_fst = False
+			nw_act_lst.append('H')
+		else:
+			if nw_prev_bs == nw_act:
+				nw_act = 'HH'
+			if nw_act != 'HH':
+				nw_prev_bs = nw_act
+
+			if (nw_act == 'BS') or (nw_act == 'SB'):
+				nw_act_lst.append(nw_act[-1])
+			else:
+				nw_act_lst.append('H')
+		nw_act_patt = trend_lst[prev_act_idx:i]
+		nw_act_patt_lst.append('-'.join(nw_act_patt))
+
+		# val = {
+		# 	"PricePD": c_pd,
+		# 	"PricePdBP": percentage_diff(cp,bp),
+		# 	"trend_lst": trend(cp, pp),
+		# 	"TrendHist": '-'.join(trend_lst[tread_idx:]),
+		# 	"TrendHistDownCount": '-'.join(trend_lst[tread_idx:]).count('D'),
+		# 	"TrendHistUpCount": '-'.join(trend_lst[tread_idx:]).count('U'),
+		# 	"TwoTrendHist": '-'.join(prev_trend_hist + trend_lst[tread_idx:]),
+		# 	"TwoTrendHistDownCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('D'),
+		# 	"TwoTrendHistUpCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('U'),
+		# 	"nw_act_patt_lst": '-'.join(nw_act_patt),
+		# }
+
+		payload = {
+			"instances": [
+				{
+					"PricePD": c_pd,
+					"PricePdBP": percentage_diff(cp,bp),
+					"trend_lst": trend(cp, pp),
+					"TrendHist": '-'.join(trend_lst[tread_idx:]),
+					"TrendHistDownCount": '-'.join(trend_lst[tread_idx:]).count('D'),
+					"TrendHistUpCount": '-'.join(trend_lst[tread_idx:]).count('U'),
+					"TwoTrendHist": '-'.join(prev_trend_hist + trend_lst[tread_idx:]),
+					"TwoTrendHistDownCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('D'),
+					"TwoTrendHistUpCount": '-'.join(prev_trend_hist + trend_lst[tread_idx:]).count('U'),
+					"nw_act_patt_lst": '-'.join(nw_act_patt),
+				}
+			]
+		}
+
+		model_pred_lst.append(pred(payload))
+
+		if prev_act != act:
+			prev_act = act
+			prev_act_idx = i
+
+		if(act == 'H'):
+			share_lst.append(prev_share)
+			fiat_lst.append(prev_fiat)
+		if act == 'B':
+			prev_share = prev_fiat/cp
+			share_lst.append(prev_share)
+			fiat_lst.append(0.0)
+			prev_fiat = 0.0
+			bp=cp
+			pbs = 'B'
+		if act == 'S':
+			prev_fiat = cp*prev_share
+			share_lst.append(0.0)
+			fiat_lst.append(prev_fiat)
+			prev_share = 0.0
+			pbs = 'S'
+        
+        
+			
+
+
+		if(i%update == 0):
+			print("Remaining:\t",-1*size-i)
+	profitable = fiat_lst[-1] > starting_amount if fiat_lst[-1] != 0.0 else share_lst[-1]*cp > starting_amount
+	percentage_gain = round((100*fiat_lst[-1]/starting_amount)-100,2) if fiat_lst[-1] != 0 else round((100*share_lst[-1]*cp/starting_amount)-100,2)
+	net_fiat_profit = round(fiat_lst[-1]-starting_amount,2) if fiat_lst[-1] != 0.0 else share_lst[-1]*cp - starting_amount
+
+	print(profitable, ': ', percentage_gain, '%')
+	# print(nw_act_lst)
+	# for i in range(10):
+	# 	print(i+1,': ', trend_hist_up_count_lst.count(i+1))
+	chunk_data(
+			price_lst=price_lst,
+			price_pd_lst=price_pd_lst,
+			price_pd_bp_lst=price_pd_bp_lst,
+			trend_lst=trend_lst,
+			tread_hist_lst=tread_hist_lst,
+			act_lst=act_lst,
+			share_lst=share_lst,
+			fiat_lst=fiat_lst,
+			starting_amount=starting_amount,
+			profitable=profitable,
+			percentage_gain = percentage_gain,
+			net_fiat_profit=net_fiat_profit,
+			two_trend_hist_lst=two_trend_hist_lst,
+			trend_hist_up_count_lst=trend_hist_up_count_lst,
+			trend_hist_down_count_lst=trend_hist_down_count_lst,
+			two_trend_hist_up_count_lst=two_trend_hist_up_count_lst,
+			two_trend_hist_down_count_lst=two_trend_hist_down_count_lst,
+			nw_act_lst=nw_act_lst,
+			nw_act_patt_lst=nw_act_patt_lst,
+			model_pred_lst=model_pred_lst,
+			export_file_name=export_file_name,
+		)
+
+
+bt=['D','D','D','U']
+st=['U','U','D']
+
+size = 1440*1
+# size = 5
+update = 10000
+starting_amount = 100.0
+exp_fn = 'v9-1-tst.csv'
+
+prepare_dataset(
+		raw_data_file_name='raw_data.csv',
+		export_file_name=exp_fn,
+		size=size,
+		update=update,
+		starting_amount=starting_amount,
+		bt=bt,
+		st=st
+		)

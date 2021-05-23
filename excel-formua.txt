@@ -1,3 +1,0 @@
-Share	Fiat	StartingAmount	Profitable	Percentage Gain	Net Fiat Profit
-0	100	100	TRUE	15.51	15.51
-0	100				

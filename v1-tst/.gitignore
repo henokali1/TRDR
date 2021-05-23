@@ -1,0 +1,7 @@
+*.csv
+*.xlsx
+model/
+*.txt
+*.exe
+*.png
+*.log
