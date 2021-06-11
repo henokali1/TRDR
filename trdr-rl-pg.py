@@ -72,10 +72,10 @@ def get_usdt_balance(client, coin):
 
 def get_current_price(client, pair):
     ts = int(time.time())*1000
-    to_date = int(time.time())
-    from_date = to_date - 1
-    price = get_historical_data(client, pair, from_date, to_date)
-    print(price)
+    to_date = ts
+    from_date = ts - 60000
+    price = float(get_historical_data(client, pair, from_date, to_date)[0][1])
+    return price
 
 def get_usdt_pair_coins(client):
 	r=[]
@@ -88,6 +88,10 @@ def get_usdt_pair_coins(client):
 
 def get_quantity(client, pair):
     price = get_current_price(client, pair)
+    usdt_balance = get_usdt_balance(client, 'USDT')['free']
+    half_usdt = usdt_balance/2
+    qty = half_usdt/price
+    return qty
 
 def buy(client, pair, quantity):
     order = client.creat_order(
@@ -98,12 +102,12 @@ def buy(client, pair, quantity):
     )
 
 client = get_client()
-min_usdt = 50.0
-filtered_coins = ['USDT', 'BUSD']
-trending_coins = get_trending_coins()
-all_coins = get_usdt_pair_coins(client)
+# min_usdt = 50.0
+# filtered_coins = ['USDT', 'BUSD']
+# trending_coins = get_trending_coins()
+# all_coins = get_usdt_pair_coins(client)
 
-print('trending_coins: ', trending_coins)
+# print('trending_coins: ', trending_coins)
 # for coin in trending_coins:
 #     usdt_balance = get_usdt_balance(client, 'USDT')['free']
 #     if (usdt_balance > min_usdt):
@@ -117,4 +121,5 @@ print('trending_coins: ', trending_coins)
 #     else:
 #         print('insufficient USDT: $', usdt_balance)
 #         break
-get_quantity(client, 'ADAUSDT')
+print(get_quantity(client, 'ADAUSDT'))
+
